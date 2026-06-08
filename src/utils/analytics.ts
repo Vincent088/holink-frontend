@@ -1,4 +1,4 @@
-import type { AnalyticsEvent } from '../types'
+import type { AnalyticsEvent } from '@/types'
 
 const STORAGE_KEY = 'holink_analytics'
 

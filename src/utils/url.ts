@@ -1,4 +1,4 @@
-import type { Platform } from '../types'
+import type { Platform } from '@/types'
 
 const UNSAFE_PROTOCOLS = ['javascript:', 'data:', 'file:', 'vbscript:']
 
