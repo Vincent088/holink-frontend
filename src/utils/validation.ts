@@ -1,5 +1,5 @@
 import { isValidUrl } from './url'
-import type { ValidationError } from '../types'
+import type { ValidationError } from '@/types'
 
 export function validateUsername(value: string): ValidationError | null {
   if (!value) return { field: 'username', message: 'Username is required.' }

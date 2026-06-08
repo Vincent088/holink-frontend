@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { HoLinkUser, HoLinkItem } from '../types'
-import { generateId } from '../utils/id'
-import { normalizeUrl, detectPlatform } from '../utils/url'
-import { trackEvent } from '../utils/analytics'
+import type { HoLinkUser, HoLinkItem } from '@/types'
+import { generateId } from '@/utils/id'
+import { normalizeUrl, detectPlatform } from '@/utils/url'
+import { trackEvent } from '@/utils/analytics'
 
 const STORAGE_KEY = 'holink_users'
 const CURRENT_USER_KEY = 'holink_current_user'
