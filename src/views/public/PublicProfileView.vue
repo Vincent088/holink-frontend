@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted } from 'vue'
+  import { ref, computed, onMounted, onUnmounted } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { ExternalLink } from 'lucide-vue-next'
   import { profileApi } from '@/services/api'
@@ -61,6 +61,41 @@
   const isLoading = ref(true)
   const username = route.params.username as string
   const profile = ref<HoLinkUser | null>(null)
+
+  function setMeta(property: string, content: string) {
+    const attr = property.startsWith('twitter:') ? 'name' : 'property'
+    let el = document.querySelector<HTMLMetaElement>(`meta[${attr}="${property}"]`)
+    if (!el) {
+      el = document.createElement('meta')
+      el.setAttribute(attr, property)
+      el.setAttribute('data-og', 'dynamic')
+      document.head.appendChild(el)
+    }
+    el.setAttribute('content', content)
+  }
+
+  function applyOgTags(user: HoLinkUser) {
+    const linkCount = user.links.filter((l) => l.isActive).length
+    const description = user.bio ? user.bio : `${linkCount} link${linkCount !== 1 ? 's' : ''} by ${user.displayName}`
+    const pageUrl = window.location.href
+
+    document.title = `${user.displayName} | HoLink`
+
+    setMeta('og:type', 'profile')
+    setMeta('og:title', `${user.displayName} | HoLink`)
+    setMeta('og:description', description)
+    setMeta('og:url', pageUrl)
+    if (user.avatarUrl) setMeta('og:image', user.avatarUrl)
+
+    setMeta('twitter:card', user.avatarUrl ? 'summary_large_image' : 'summary')
+    setMeta('twitter:title', `${user.displayName} | HoLink`)
+    setMeta('twitter:description', description)
+  }
+
+  function removeOgTags() {
+    document.querySelectorAll('meta[data-og="dynamic"]').forEach((el) => el.remove())
+    document.title = 'HoLink'
+  }
 
   const activeLinks = computed(() => (profile.value ? [...profile.value.links].filter((l) => l.isActive).sort((a, b) => a.order - b.order) : []))
 
@@ -99,6 +134,7 @@
     }
 
     profile.value = result
+    applyOgTags(result)
 
     trackEvent('public_profile_viewed', {
       username,
@@ -109,6 +145,10 @@
     setTimeout(() => {
       isLoading.value = false
     }, 450)
+  })
+
+  onUnmounted(() => {
+    removeOgTags()
   })
 </script>
 
