@@ -1,5 +1,12 @@
 export type Platform = 'instagram' | 'youtube' | 'tiktok' | 'whatsapp' | 'marketplace' | 'website' | 'unknown'
 
+export interface HoLinkDraft {
+  title: string
+  url: string
+  normalizedUrl: string
+  platform: Platform
+}
+
 export interface HoLinkItem {
   id: string
   title: string
@@ -13,6 +20,7 @@ export interface HoLinkItem {
   utmSource?: string
   utmMedium?: string
   utmCampaign?: string
+  draft?: HoLinkDraft
 }
 
 export interface HoLinkUser {

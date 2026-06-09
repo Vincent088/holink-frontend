@@ -160,6 +160,52 @@ export const useUserStore = defineStore('user', () => {
     persist()
   }
 
+  function saveLinkDraft(linkId: string, title: string, url: string) {
+    if (!currentUser.value) return
+
+    const index = users.value.findIndex((u) => u.id === currentUserId.value)
+    const linkIndex = users.value[index].links.findIndex((l) => l.id === linkId)
+    if (linkIndex === -1) return
+
+    const normalized = normalizeUrl(url)
+    const platform = detectPlatform(normalized)
+    users.value[index].links[linkIndex].draft = { title, url, normalizedUrl: normalized, platform }
+    persist()
+  }
+
+  function publishLinkDraft(linkId: string) {
+    if (!currentUser.value) return
+
+    const index = users.value.findIndex((u) => u.id === currentUserId.value)
+    const linkIndex = users.value[index].links.findIndex((l) => l.id === linkId)
+    if (linkIndex === -1) return
+
+    const link = users.value[index].links[linkIndex]
+    if (!link.draft) return
+
+    users.value[index].links[linkIndex] = {
+      ...link,
+      title: link.draft.title,
+      url: link.draft.url,
+      normalizedUrl: link.draft.normalizedUrl,
+      platform: link.draft.platform,
+      updatedAt: new Date().toISOString(),
+      draft: undefined,
+    }
+    persist()
+  }
+
+  function discardLinkDraft(linkId: string) {
+    if (!currentUser.value) return
+
+    const index = users.value.findIndex((u) => u.id === currentUserId.value)
+    const linkIndex = users.value[index].links.findIndex((l) => l.id === linkId)
+    if (linkIndex === -1) return
+
+    users.value[index].links[linkIndex].draft = undefined
+    persist()
+  }
+
   function reorderLinks(newOrder: HoLinkItem[]) {
     if (!currentUser.value) return
 
@@ -179,6 +225,9 @@ export const useUserStore = defineStore('user', () => {
     updateLink,
     deleteLink,
     toggleLink,
+    saveLinkDraft,
+    publishLinkDraft,
+    discardLinkDraft,
     reorderLinks,
     getUserByUsername,
     isUsernameTaken,
