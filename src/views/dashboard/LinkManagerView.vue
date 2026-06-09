@@ -57,6 +57,9 @@
           @cancel-edit="closeEdit"
           @delete="confirmDelete(link.id)"
           @toggle="toggleLink(link.id)"
+          @save-draft="saveEditAsDraft"
+          @publish-draft="publishDraft(link.id)"
+          @discard-draft="discardDraft(link.id)"
           @utm="openUtm(link.id)"
           @move-up="moveUp(link.id)"
           @move-down="moveDown(link.id)"
@@ -165,6 +168,9 @@
     deletedLink,
     undoDelete,
     toggleLink,
+    saveEditAsDraft,
+    publishDraft,
+    discardDraft,
     moveUp,
     moveDown,
     onReorder,

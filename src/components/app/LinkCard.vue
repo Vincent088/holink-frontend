@@ -30,12 +30,7 @@
         <!-- Actions -->
         <div class="card-actions">
           <Switch :model-value="link.isActive" @update:model-value="$emit('toggle')" />
-          <button
-            class="action-btn"
-            :class="{ 'action-btn--utm-active': hasUtm }"
-            :title="hasUtm ? 'Edit UTM parameters' : 'Add UTM parameters'"
-            @click="$emit('utm')"
-          >
+          <button class="action-btn" :class="{ 'action-btn--utm-active': hasUtm }" :title="hasUtm ? 'Edit UTM parameters' : 'Add UTM parameters'" @click="$emit('utm')">
             <Tags :size="15" />
           </button>
           <button class="action-btn" @click="$emit('edit')">
@@ -44,6 +39,27 @@
           <button class="action-btn action-btn--danger" @click="$emit('delete')">
             <Trash2 :size="15" />
           </button>
+        </div>
+      </div>
+
+      <!-- Draft section -->
+      <div v-if="link.draft" class="draft-section">
+        <div class="draft-header">
+          <span class="draft-label">Unpublished changes</span>
+          <div class="draft-actions">
+            <button class="draft-btn draft-btn--discard" @click="$emit('discard-draft')">Discard</button>
+            <button class="draft-btn draft-btn--publish" @click="$emit('publish-draft')">Publish</button>
+          </div>
+        </div>
+        <div class="draft-info">
+          <div class="draft-row">
+            <span class="draft-field-label">Title</span>
+            <span class="draft-value">{{ link.draft.title }}</span>
+          </div>
+          <div class="draft-row">
+            <span class="draft-field-label">URL</span>
+            <span class="draft-value draft-value--url">{{ link.draft.normalizedUrl }}</span>
+          </div>
         </div>
       </div>
     </template>
@@ -70,6 +86,7 @@
         </div>
         <div class="edit-actions">
           <AppButton size="sm" @click="$emit('save-edit')">Save</AppButton>
+          <AppButton variant="outline" size="sm" @click="$emit('save-draft')">Save as Draft</AppButton>
           <AppButton variant="ghost" size="sm" @click="$emit('cancel-edit')">Cancel</AppButton>
         </div>
       </div>
@@ -98,22 +115,24 @@
   defineEmits<{
     edit: []
     'save-edit': []
+    'save-draft': []
     'cancel-edit': []
     delete: []
     toggle: []
     'move-up': []
     'move-down': []
     utm: []
+    'publish-draft': []
+    'discard-draft': []
     'update:edit-form': [value: { title: string; url: string }]
   }>()
 
-  const hasUtm = computed(
-    () => !!(props.link.utmSource || props.link.utmMedium || props.link.utmCampaign),
-  )
+  const hasUtm = computed(() => !!(props.link.utmSource || props.link.utmMedium || props.link.utmCampaign))
 
   const cardClass = computed(() => ({
     'link-card': true,
     'link-card--inactive': !props.link.isActive,
+    'link-card--has-draft': !!props.link.draft,
     'link-card--editing': props.isEditing,
   }))
 </script>
@@ -124,6 +143,9 @@
   }
   .link-card--inactive {
     @apply opacity-60;
+  }
+  .link-card--has-draft {
+    @apply border-amber-300 dark:border-amber-700/60;
   }
   .link-card--editing {
     @apply border-violet-400 dark:border-violet-600 ring-2 ring-violet-200 dark:ring-violet-900;
@@ -164,6 +186,46 @@
   .action-btn--utm-active {
     @apply text-violet-500 dark:text-violet-400;
   }
+  .draft-section {
+    @apply border-t border-amber-200 dark:border-amber-800/50
+           bg-amber-50 dark:bg-amber-950/30
+           rounded-b-xl px-4 py-3 flex flex-col gap-2;
+  }
+  .draft-header {
+    @apply flex items-center justify-between gap-2;
+  }
+  .draft-label {
+    @apply text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wide;
+  }
+  .draft-actions {
+    @apply flex items-center gap-2;
+  }
+  .draft-btn {
+    @apply text-xs font-medium px-2.5 py-1 rounded-lg transition-colors;
+  }
+  .draft-btn--discard {
+    @apply text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400
+           hover:bg-red-50 dark:hover:bg-red-900/20;
+  }
+  .draft-btn--publish {
+    @apply bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500
+           text-white;
+  }
+  .draft-info {
+    @apply flex flex-col gap-1;
+  }
+  .draft-row {
+    @apply flex items-baseline gap-2;
+  }
+  .draft-field-label {
+    @apply text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-500 w-8 shrink-0;
+  }
+  .draft-value {
+    @apply text-xs text-gray-700 dark:text-gray-300 font-medium;
+  }
+  .draft-value--url {
+    @apply text-gray-500 dark:text-gray-400 font-normal truncate;
+  }
   .edit-body {
     @apply p-4 flex flex-col gap-4;
   }
@@ -171,6 +233,6 @@
     @apply grid grid-cols-1 gap-3 sm:grid-cols-2;
   }
   .edit-actions {
-    @apply flex gap-2;
+    @apply flex gap-2 flex-wrap;
   }
 </style>

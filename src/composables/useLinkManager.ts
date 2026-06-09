@@ -50,7 +50,10 @@ export function useLinkManager() {
   function openEdit(id: string) {
     const link = store.sortedLinks.find((l) => l.id === id)
     if (!link) return
-    editForm.value = { title: link.title, url: link.normalizedUrl }
+    editForm.value = {
+      title: link.draft?.title ?? link.title,
+      url: link.draft?.url ?? link.normalizedUrl,
+    }
     editErrors.value = { title: '', url: '' }
     editingId.value = id
   }
@@ -71,7 +74,22 @@ export function useLinkManager() {
       title: editForm.value.title.trim(),
       url: editForm.value.url,
     })
+    store.discardLinkDraft(editingId.value)
     closeEdit()
+  }
+
+  function saveEditAsDraft() {
+    if (!editingId.value || !validateEditForm()) return
+    store.saveLinkDraft(editingId.value, editForm.value.title.trim(), editForm.value.url)
+    closeEdit()
+  }
+
+  function publishDraft(id: string) {
+    store.publishLinkDraft(id)
+  }
+
+  function discardDraft(id: string) {
+    store.discardLinkDraft(id)
   }
 
   const pendingDeleteId = ref<string | null>(null)
@@ -215,6 +233,9 @@ export function useLinkManager() {
     deletedLink,
     undoDelete,
     toggleLink,
+    saveEditAsDraft,
+    publishDraft,
+    discardDraft,
     moveUp,
     moveDown,
     onReorder,
