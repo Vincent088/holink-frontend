@@ -57,6 +57,7 @@
           @cancel-edit="closeEdit"
           @delete="confirmDelete(link.id)"
           @toggle="toggleLink(link.id)"
+          @utm="openUtm(link.id)"
           @move-up="moveUp(link.id)"
           @move-down="moveDown(link.id)"
           @update:edit-form="editForm = $event"
@@ -95,6 +96,9 @@
       </DialogContent>
     </Dialog>
 
+    <!-- UTM Builder Dialog -->
+    <UTMBuilderDialog :link="utmLink" @close="closeUtm" @save="saveUtm" />
+
     <!-- Import Dialog -->
     <Dialog :open="isImporting" @update:open="closeImport">
       <DialogContent>
@@ -131,6 +135,7 @@
   import AppTextarea from '@/components/app/AppTextarea.vue'
   import AppButton from '@/components/app/AppButton.vue'
   import LinkCard from '@/components/app/LinkCard.vue'
+  import UTMBuilderDialog from '@/components/app/UTMBuilderDialog.vue'
   import PlatformBadge from '@/components/app/PlatformBadge.vue'
   import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
   import { useLinkManager } from '@/composables/useLinkManager'
@@ -169,6 +174,10 @@
     openImport,
     closeImport,
     importUrls,
+    utmLink,
+    openUtm,
+    closeUtm,
+    saveUtm,
   } = useLinkManager()
 
   const localLinks = ref<HoLinkItem[]>([])

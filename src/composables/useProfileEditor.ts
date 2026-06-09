@@ -38,7 +38,6 @@ export function useProfileEditor() {
     }
   )
 
-  // Reset image load error when user changes the URL
   watch(
     () => form.value.avatarUrl,
     () => {
@@ -47,7 +46,6 @@ export function useProfileEditor() {
     }
   )
 
-  // Base64 data URLs come from our own file upload — always safe, skip external validation
   function isDataUrl(url: string): boolean {
     return url.startsWith('data:image/')
   }
@@ -77,8 +75,14 @@ export function useProfileEditor() {
     return new Promise((resolve) => {
       const img = new Image()
       const timeout = setTimeout(() => resolve(false), 5000)
-      img.onload = () => { clearTimeout(timeout); resolve(true) }
-      img.onerror = () => { clearTimeout(timeout); resolve(false) }
+      img.onload = () => {
+        clearTimeout(timeout)
+        resolve(true)
+      }
+      img.onerror = () => {
+        clearTimeout(timeout)
+        resolve(false)
+      }
       img.src = url
     })
   }
@@ -89,7 +93,6 @@ export function useProfileEditor() {
     isSaving.value = true
     saveSuccess.value = false
 
-    // If URL is provided and not a data URL, confirm the image actually loads before saving
     if (form.value.avatarUrl && !isDataUrl(form.value.avatarUrl) && isValidUrl(form.value.avatarUrl)) {
       const imageLoads = await checkImageLoads(form.value.avatarUrl)
       if (!imageLoads) {

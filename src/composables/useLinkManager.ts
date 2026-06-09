@@ -137,6 +137,28 @@ export function useLinkManager() {
     store.reorderLinks(links)
   }
 
+  const utmLinkId = ref<string | null>(null)
+
+  const utmLink = computed(() => (utmLinkId.value ? (store.sortedLinks.find((l) => l.id === utmLinkId.value) ?? null) : null))
+
+  function openUtm(id: string) {
+    utmLinkId.value = id
+  }
+
+  function closeUtm() {
+    utmLinkId.value = null
+  }
+
+  function saveUtm(source: string, medium: string, campaign: string) {
+    if (!utmLinkId.value) return
+    store.updateLink(utmLinkId.value, {
+      utmSource: source.trim() || undefined,
+      utmMedium: medium.trim() || undefined,
+      utmCampaign: campaign.trim() || undefined,
+    })
+    closeUtm()
+  }
+
   const isImporting = ref(false)
   const importText = ref('')
   const importError = ref('')
@@ -196,6 +218,11 @@ export function useLinkManager() {
     moveUp,
     moveDown,
     onReorder,
+    utmLinkId,
+    utmLink,
+    openUtm,
+    closeUtm,
+    saveUtm,
     isImporting,
     importText,
     importError,

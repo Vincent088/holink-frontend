@@ -115,7 +115,7 @@ export const useUserStore = defineStore('user', () => {
     })
   }
 
-  function updateLink(linkId: string, data: Partial<Pick<HoLinkItem, 'title' | 'url' | 'isActive'>>) {
+  function updateLink(linkId: string, data: Partial<Pick<HoLinkItem, 'title' | 'url' | 'isActive' | 'utmSource' | 'utmMedium' | 'utmCampaign'>>) {
     if (!currentUser.value) return
 
     const index = users.value.findIndex((u) => u.id === currentUserId.value)
