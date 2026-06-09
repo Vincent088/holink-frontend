@@ -15,6 +15,19 @@
       </div>
     </template>
 
+    <!-- Profile not found -->
+    <template v-else-if="notFound">
+      <div class="not-found-card">
+        <div class="not-found-icon-wrapper">
+          <UserX :size="36" class="not-found-icon" />
+        </div>
+        <h1 class="not-found-title">Profile not found</h1>
+        <p class="not-found-subtitle">
+          <span class="not-found-username">@{{ username }}</span> doesn't exist or may have been removed.
+        </p>
+      </div>
+    </template>
+
     <!-- Content -->
     <template v-else-if="profile">
       <!-- Profile header -->
@@ -47,8 +60,8 @@
 
 <script setup lang="ts">
   import { ref, computed, onMounted, onUnmounted } from 'vue'
-  import { useRoute, useRouter } from 'vue-router'
-  import { ExternalLink } from 'lucide-vue-next'
+  import { useRoute } from 'vue-router'
+  import { ExternalLink, UserX } from 'lucide-vue-next'
   import { profileApi } from '@/services/api'
   import { trackEvent } from '@/utils/analytics'
   import { buildUtmUrl } from '@/utils/url'
@@ -56,9 +69,9 @@
   import type { HoLinkUser, HoLinkItem } from '@/types'
 
   const route = useRoute()
-  const router = useRouter()
 
   const isLoading = ref(true)
+  const notFound = ref(false)
   const username = route.params.username as string
   const profile = ref<HoLinkUser | null>(null)
 
@@ -129,7 +142,8 @@
     const result = await profileApi.getByUsername(username)
 
     if (!result) {
-      router.replace({ name: 'NotFound' })
+      notFound.value = true
+      isLoading.value = false
       return
     }
 
@@ -202,6 +216,29 @@
   }
   .no-links {
     @apply text-sm text-gray-400 dark:text-gray-600;
+  }
+  .not-found-card {
+    @apply flex flex-col items-center gap-3 text-center max-w-sm;
+  }
+  .not-found-icon-wrapper {
+    @apply w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-900
+           flex items-center justify-center mb-2;
+  }
+  .not-found-icon {
+    @apply text-gray-400 dark:text-gray-600;
+  }
+  .not-found-title {
+    @apply text-xl font-bold text-gray-900 dark:text-white;
+  }
+  .not-found-subtitle {
+    @apply text-sm text-gray-500 dark:text-gray-400 leading-relaxed;
+  }
+  .not-found-username {
+    @apply font-medium text-gray-700 dark:text-gray-300;
+  }
+  .not-found-link {
+    @apply mt-2 text-sm text-violet-600 dark:text-violet-400
+           hover:underline transition-colors;
   }
   .skeleton {
     @apply bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse;

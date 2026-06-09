@@ -25,6 +25,11 @@ const router = createRouter({
           name: 'DashboardLinks',
           component: () => import('@/views/dashboard/LinkManagerView.vue'),
         },
+        {
+          path: ':pathMatch(.*)*',
+          name: 'DashboardNotFound',
+          component: () => import('@/views/public/NotFoundView.vue'),
+        },
       ],
     },
     {
