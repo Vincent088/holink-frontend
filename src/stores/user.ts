@@ -4,6 +4,7 @@ import type { HoLinkUser, HoLinkItem } from '@/types'
 import { generateId } from '@/utils/id'
 import { normalizeUrl, detectPlatform } from '@/utils/url'
 import { trackEvent } from '@/utils/analytics'
+import { profileApi, linksApi } from '@/services/api'
 
 const STORAGE_KEY = 'holink_users'
 const CURRENT_USER_KEY = 'holink_current_user'
@@ -21,9 +22,7 @@ export const useUserStore = defineStore('user', () => {
   const users = ref<HoLinkUser[]>(loadUsers())
   const currentUserId = ref<string>(loadCurrentUserId())
 
-  const currentUser = computed<HoLinkUser | null>(() => {
-    return users.value.find((u) => u.id === currentUserId.value) ?? null
-  })
+  const currentUser = computed<HoLinkUser | null>(() => users.value.find((u) => u.id === currentUserId.value) ?? null)
 
   const activeLinks = computed<HoLinkItem[]>(() => {
     if (!currentUser.value) return []
@@ -52,11 +51,6 @@ export const useUserStore = defineStore('user', () => {
     return users.value[0]?.id ?? ''
   }
 
-  function persist() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(users.value))
-    localStorage.setItem(CURRENT_USER_KEY, currentUserId.value)
-  }
-
   function getUserByUsername(username: string): HoLinkUser | null {
     return users.value.find((u) => u.username === username) ?? null
   }
@@ -65,153 +59,130 @@ export const useUserStore = defineStore('user', () => {
     return users.value.some((u) => u.username === username && u.id !== excludeId)
   }
 
-  function updateCurrentUser(index: number, updated: HoLinkUser) {
-    users.value[index] = updated
-    persist()
+  function syncCurrentUserId() {
+    localStorage.setItem(CURRENT_USER_KEY, currentUserId.value)
   }
 
-  function saveProfile(data: Partial<Pick<HoLinkUser, 'username' | 'displayName' | 'bio' | 'avatarUrl'>>) {
-    if (!currentUser.value) return
+  function findUserIndex(): number {
+    return users.value.findIndex((u) => u.id === currentUserId.value)
+  }
 
-    const index = users.value.findIndex((u) => u.id === currentUserId.value)
-    if (index === -1) return
+  function findLinkIndex(index: number, linkId: string): number {
+    return users.value[index].links.findIndex((l) => l.id === linkId)
+  }
+
+  async function saveProfile(data: Partial<Pick<HoLinkUser, 'username' | 'displayName' | 'bio' | 'avatarUrl'>>): Promise<void> {
+    if (!currentUser.value) return
 
     const changedFields = Object.keys(data).filter((key) => data[key as keyof typeof data] !== currentUser.value![key as keyof HoLinkUser])
 
-    updateCurrentUser(index, { ...users.value[index], ...data })
+    const updated = await profileApi.update(data)
+
+    const index = findUserIndex()
+    users.value[index] = updated
+    syncCurrentUserId()
 
     trackEvent('profile_saved', {
-      username: currentUser.value.username,
+      username: updated.username,
       changed_fields: changedFields,
     })
   }
 
-  function addLink(title: string, url: string) {
+  async function addLink(title: string, url: string): Promise<void> {
     if (!currentUser.value) return
 
-    const normalized = normalizeUrl(url)
-    const platform = detectPlatform(normalized)
-    const index = users.value.findIndex((u) => u.id === currentUserId.value)
+    const newLink = await linksApi.create({ title, url })
 
-    const newLink: HoLinkItem = {
-      id: generateId(),
-      title: title.trim(),
-      url,
-      normalizedUrl: normalized,
-      platform,
-      isActive: true,
-      order: currentUser.value.links.length,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
+    const index = findUserIndex()
     users.value[index].links.push(newLink)
-    persist()
 
     trackEvent('link_added', {
       link_id: newLink.id,
       platform: newLink.platform,
-      url_domain: new URL(normalized).hostname,
+      url_domain: new URL(newLink.normalizedUrl).hostname,
     })
   }
 
-  function updateLink(linkId: string, data: Partial<Pick<HoLinkItem, 'title' | 'url' | 'isActive' | 'utmSource' | 'utmMedium' | 'utmCampaign'>>) {
+  async function updateLink(linkId: string, data: Partial<Pick<HoLinkItem, 'title' | 'url' | 'isActive' | 'utmSource' | 'utmMedium' | 'utmCampaign'>>): Promise<void> {
     if (!currentUser.value) return
 
-    const index = users.value.findIndex((u) => u.id === currentUserId.value)
-    const linkIndex = users.value[index].links.findIndex((l) => l.id === linkId)
-    if (linkIndex === -1) return
+    const updated = await linksApi.update(linkId, data)
 
-    const existing = users.value[index].links[linkIndex]
-    const normalized = data.url ? normalizeUrl(data.url) : existing.normalizedUrl
-    const platform = data.url ? detectPlatform(normalized) : existing.platform
-
-    users.value[index].links[linkIndex] = {
-      ...existing,
-      ...data,
-      normalizedUrl: normalized,
-      platform,
-      updatedAt: new Date().toISOString(),
-    }
-
-    persist()
+    const index = findUserIndex()
+    const linkIndex = findLinkIndex(index, linkId)
+    if (linkIndex !== -1) users.value[index].links[linkIndex] = updated
   }
 
-  function deleteLink(linkId: string) {
+  async function deleteLink(linkId: string): Promise<void> {
     if (!currentUser.value) return
 
-    const index = users.value.findIndex((u) => u.id === currentUserId.value)
-    users.value[index].links = users.value[index].links.filter((l) => l.id !== linkId)
+    await linksApi.remove(linkId)
 
+    const index = findUserIndex()
+    users.value[index].links = users.value[index].links.filter((l) => l.id !== linkId)
     users.value[index].links.forEach((l, i) => {
       l.order = i
     })
-    persist()
   }
 
-  function toggleLink(linkId: string) {
+  async function toggleLink(linkId: string): Promise<void> {
     if (!currentUser.value) return
 
-    const index = users.value.findIndex((u) => u.id === currentUserId.value)
-    const linkIndex = users.value[index].links.findIndex((l) => l.id === linkId)
+    const index = findUserIndex()
+    const linkIndex = findLinkIndex(index, linkId)
     if (linkIndex === -1) return
 
     users.value[index].links[linkIndex].isActive = !users.value[index].links[linkIndex].isActive
-    persist()
+
+    try {
+      await linksApi.toggle(linkId)
+    } catch {
+      users.value[index].links[linkIndex].isActive = !users.value[index].links[linkIndex].isActive
+    }
   }
 
-  function saveLinkDraft(linkId: string, title: string, url: string) {
+  async function reorderLinks(newOrder: HoLinkItem[]): Promise<void> {
     if (!currentUser.value) return
 
-    const index = users.value.findIndex((u) => u.id === currentUserId.value)
-    const linkIndex = users.value[index].links.findIndex((l) => l.id === linkId)
-    if (linkIndex === -1) return
+    const index = findUserIndex()
+
+    users.value[index].links = newOrder.map((l, i) => ({ ...l, order: i }))
+
+    await linksApi.reorder(newOrder)
+  }
+
+  async function saveLinkDraft(linkId: string, title: string, url: string): Promise<void> {
+    if (!currentUser.value) return
 
     const normalized = normalizeUrl(url)
     const platform = detectPlatform(normalized)
-    users.value[index].links[linkIndex].draft = { title, url, normalizedUrl: normalized, platform }
-    persist()
+    const draft = { title, url, normalizedUrl: normalized, platform }
+
+    const updated = await linksApi.saveDraft(linkId, draft)
+
+    const index = findUserIndex()
+    const linkIndex = findLinkIndex(index, linkId)
+    if (linkIndex !== -1) users.value[index].links[linkIndex] = updated
   }
 
-  function publishLinkDraft(linkId: string) {
+  async function publishLinkDraft(linkId: string): Promise<void> {
     if (!currentUser.value) return
 
-    const index = users.value.findIndex((u) => u.id === currentUserId.value)
-    const linkIndex = users.value[index].links.findIndex((l) => l.id === linkId)
-    if (linkIndex === -1) return
+    const updated = await linksApi.publishDraft(linkId)
 
-    const link = users.value[index].links[linkIndex]
-    if (!link.draft) return
-
-    users.value[index].links[linkIndex] = {
-      ...link,
-      title: link.draft.title,
-      url: link.draft.url,
-      normalizedUrl: link.draft.normalizedUrl,
-      platform: link.draft.platform,
-      updatedAt: new Date().toISOString(),
-      draft: undefined,
-    }
-    persist()
+    const index = findUserIndex()
+    const linkIndex = findLinkIndex(index, linkId)
+    if (linkIndex !== -1) users.value[index].links[linkIndex] = updated
   }
 
-  function discardLinkDraft(linkId: string) {
+  async function discardLinkDraft(linkId: string): Promise<void> {
     if (!currentUser.value) return
 
-    const index = users.value.findIndex((u) => u.id === currentUserId.value)
-    const linkIndex = users.value[index].links.findIndex((l) => l.id === linkId)
-    if (linkIndex === -1) return
+    const updated = await linksApi.discardDraft(linkId)
 
-    users.value[index].links[linkIndex].draft = undefined
-    persist()
-  }
-
-  function reorderLinks(newOrder: HoLinkItem[]) {
-    if (!currentUser.value) return
-
-    const index = users.value.findIndex((u) => u.id === currentUserId.value)
-    users.value[index].links = newOrder.map((l, i) => ({ ...l, order: i }))
-    persist()
+    const index = findUserIndex()
+    const linkIndex = findLinkIndex(index, linkId)
+    if (linkIndex !== -1) users.value[index].links[linkIndex] = updated
   }
 
   return {
@@ -225,10 +196,10 @@ export const useUserStore = defineStore('user', () => {
     updateLink,
     deleteLink,
     toggleLink,
+    reorderLinks,
     saveLinkDraft,
     publishLinkDraft,
     discardLinkDraft,
-    reorderLinks,
     getUserByUsername,
     isUsernameTaken,
   }

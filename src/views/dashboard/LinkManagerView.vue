@@ -29,14 +29,14 @@
       <div v-if="isAdding" class="add-form-card">
         <p class="add-form-title">New Link</p>
         <div class="add-form-fields">
-          <AppInput v-model="addForm.title" label="Title" placeholder="My Instagram" :maxlength="60" :error="addErrors.title" />
+          <AppInput v-model="addForm.title" label="Title" placeholder="My Instagram" :maxlength="80" :error="addErrors.title" />
           <div class="url-field">
             <AppInput v-model="addForm.url" label="URL" placeholder="https://instagram.com/username" :error="addErrors.url" />
             <PlatformBadge v-if="addForm.url" :platform="detectedPlatform" class="mt-1.5" />
           </div>
         </div>
         <div class="add-form-actions">
-          <AppButton size="sm" @click="addLink">Add Link</AppButton>
+          <AppButton size="sm" :loading="isSubmittingAdd" @click="addLink">Add Link</AppButton>
           <AppButton variant="ghost" size="sm" @click="closeAddForm">Cancel</AppButton>
         </div>
       </div>
@@ -48,6 +48,9 @@
         <LinkCard
           :link="link"
           :is-editing="editingId === link.id"
+          :is-saving-edit="editingId === link.id && isSavingEdit"
+          :is-saving-draft="editingId === link.id && isSavingDraft"
+          :is-draft-loading="draftActionLinkId === link.id"
           :edit-form="editForm"
           :edit-errors="editErrors"
           :is-first="index === 0"
@@ -94,7 +97,7 @@
         </DialogHeader>
         <DialogFooter>
           <AppButton variant="ghost" @click="cancelDelete">Cancel</AppButton>
-          <AppButton variant="destructive" @click="deleteLink">Delete</AppButton>
+          <AppButton variant="destructive" :loading="isDeletingLink" @click="deleteLink">Delete</AppButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -112,7 +115,7 @@
         <AppTextarea v-model="importText" placeholder="https://instagram.com/username&#10;https://youtube.com/@channel&#10;https://tiktok.com/@user" :rows="6" :error="importError" />
         <DialogFooter>
           <AppButton variant="ghost" @click="closeImport">Cancel</AppButton>
-          <AppButton @click="importUrls">Import</AppButton>
+          <AppButton :loading="isImportingUrls" @click="importUrls">Import</AppButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -148,6 +151,7 @@
     searchQuery,
     filteredLinks,
     isAdding,
+    isSubmittingAdd,
     addForm,
     addErrors,
     detectedPlatform,
@@ -155,26 +159,31 @@
     closeAddForm,
     addLink,
     editingId,
+    isSavingEdit,
+    isSavingDraft,
     editForm,
     editErrors,
     openEdit,
     closeEdit,
     saveEdit,
+    saveEditAsDraft,
+    draftActionLinkId,
+    publishDraft,
+    discardDraft,
     pendingDeleteId,
     pendingDeleteTitle,
+    isDeletingLink,
     confirmDelete,
     cancelDelete,
     deleteLink,
     deletedLink,
     undoDelete,
     toggleLink,
-    saveEditAsDraft,
-    publishDraft,
-    discardDraft,
     moveUp,
     moveDown,
     onReorder,
     isImporting,
+    isImportingUrls,
     importText,
     importError,
     openImport,

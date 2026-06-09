@@ -36,12 +36,7 @@
         </div>
 
         <!-- URL Input -->
-        <AppInput
-          v-model="form.avatarUrl"
-          placeholder="https://example.com/photo.jpg"
-          :hint="errors.avatarUrl ? undefined : 'Paste an image URL'"
-          :error="errors.avatarUrl"
-        />
+        <AppInput v-model="form.avatarUrl" placeholder="https://example.com/photo.jpg" :hint="errors.avatarUrl ? undefined : 'Paste an image URL'" :error="errors.avatarUrl" />
 
         <!-- Upload Error -->
         <p v-if="uploadError" class="upload-error">{{ uploadError }}</p>
@@ -85,7 +80,6 @@
 
   const fileInputRef = ref<HTMLInputElement | null>(null)
 
-
   function triggerFileInput() {
     fileInputRef.value?.click()
   }
@@ -107,7 +101,6 @@
   .page {
     @apply max-w-xl mx-auto;
   }
-
   .page-header {
     @apply mb-8;
   }
@@ -117,7 +110,6 @@
   .page-subtitle {
     @apply text-sm mt-1 text-gray-500 dark:text-gray-400;
   }
-
   .avatar-card {
     @apply flex items-center gap-5 mb-8 p-4 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800;
   }
@@ -133,7 +125,6 @@
   .avatar-label {
     @apply text-sm font-medium text-gray-900 dark:text-white;
   }
-
   .upload-row {
     @apply flex items-center gap-2;
   }
@@ -143,7 +134,6 @@
   .upload-error {
     @apply text-xs text-red-500 dark:text-red-400;
   }
-
   .form-section {
     @apply space-y-5;
   }
