@@ -40,6 +40,7 @@ export const useUserStore = defineStore('user', () => {
       if (raw) return JSON.parse(raw)
     } catch {}
     const defaultUser = { ...DEFAULT_USER, id: generateId() }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([defaultUser]))
     return [defaultUser]
   }
 
@@ -48,7 +49,9 @@ export const useUserStore = defineStore('user', () => {
       const raw = localStorage.getItem(CURRENT_USER_KEY)
       if (raw) return raw
     } catch {}
-    return users.value[0]?.id ?? ''
+    const id = users.value[0]?.id ?? ''
+    localStorage.setItem(CURRENT_USER_KEY, id)
+    return id
   }
 
   function getUserByUsername(username: string): HoLinkUser | null {

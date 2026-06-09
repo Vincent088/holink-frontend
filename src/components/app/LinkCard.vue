@@ -2,15 +2,15 @@
   <div :class="cardClass">
     <template v-if="!isEditing">
       <div class="card-body">
-        <div class="drag-handle" title="Drag to reorder">
+        <div class="drag-handle hidden sm:flex" title="Drag to reorder">
           <GripVertical :size="16" />
         </div>
 
         <div class="reorder-btns">
-          <button class="reorder-btn" :disabled="isFirst" @click="$emit('move-up')">
+          <button class="reorder-btn" :disabled="isFirst" aria-label="Move link up" @click="$emit('move-up')">
             <ChevronUp :size="14" />
           </button>
-          <button class="reorder-btn" :disabled="isLast" @click="$emit('move-down')">
+          <button class="reorder-btn" :disabled="isLast" aria-label="Move link down" @click="$emit('move-down')">
             <ChevronDown :size="14" />
           </button>
         </div>
@@ -25,13 +25,13 @@
 
         <div class="card-actions">
           <Switch :model-value="link.isActive" @update:model-value="$emit('toggle')" />
-          <button class="action-btn" :class="{ 'action-btn--utm-active': hasUtm }" :title="hasUtm ? 'Edit UTM parameters' : 'Add UTM parameters'" @click="$emit('utm')">
+          <button class="action-btn" :class="{ 'action-btn--utm-active': hasUtm }" :aria-label="hasUtm ? 'Edit UTM parameters' : 'Add UTM parameters'" @click="$emit('utm')">
             <Tags :size="15" />
           </button>
-          <button class="action-btn" @click="$emit('edit')">
+          <button class="action-btn" aria-label="Edit link" @click="$emit('edit')">
             <Pencil :size="15" />
           </button>
-          <button class="action-btn action-btn--danger" @click="$emit('delete')">
+          <button class="action-btn action-btn--danger" aria-label="Delete link" @click="$emit('delete')">
             <Trash2 :size="15" />
           </button>
         </div>
@@ -160,7 +160,8 @@
     @apply flex flex-col gap-0.5 shrink-0;
   }
   .reorder-btn {
-    @apply p-1 rounded text-gray-400 dark:text-gray-600 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors;
+    @apply p-1 rounded text-gray-400 dark:text-gray-600 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors
+           outline-none focus-visible:ring-2 focus-visible:ring-violet-500;
   }
   .link-info {
     @apply flex-1 min-w-0 flex flex-col gap-1;
@@ -178,7 +179,8 @@
     @apply flex items-center gap-2 shrink-0;
   }
   .action-btn {
-    @apply p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors;
+    @apply p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors
+           outline-none focus-visible:ring-2 focus-visible:ring-violet-500;
   }
   .action-btn--danger {
     @apply hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20;
@@ -201,7 +203,8 @@
     @apply flex items-center gap-2;
   }
   .draft-btn {
-    @apply text-xs font-medium px-2.5 py-1 rounded-lg transition-colors;
+    @apply text-xs font-medium px-2.5 py-1 rounded-lg transition-colors
+           outline-none focus-visible:ring-2 focus-visible:ring-violet-500;
   }
   .draft-btn--discard {
     @apply text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400
