@@ -114,7 +114,7 @@
 
 <style scoped>
   .page {
-    @apply min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center px-4 py-12;
+    @apply min-h-dvh bg-gray-50 dark:bg-gray-950 flex flex-col items-center px-4 py-12;
   }
   .profile-card {
     @apply flex flex-col items-center gap-4 mb-8 text-center w-full max-w-sm;
@@ -151,7 +151,8 @@
            hover:shadow-sm
            active:scale-[0.98]
            transition-all duration-150
-           cursor-pointer;
+           cursor-pointer
+           outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:border-violet-300;
   }
   .link-title {
     @apply flex-1 text-sm font-medium text-gray-900 dark:text-white truncate;
