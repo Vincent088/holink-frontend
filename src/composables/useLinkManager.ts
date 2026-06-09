@@ -16,6 +16,7 @@ export function useLinkManager() {
   })
 
   const isAdding = ref(false)
+  const isSubmittingAdd = ref(false)
   const addForm = ref({ title: '', url: '' })
   const addErrors = ref({ title: '', url: '' })
 
@@ -37,19 +38,27 @@ export function useLinkManager() {
     return !addErrors.value.title && !addErrors.value.url
   }
 
-  function addLink() {
+  async function addLink() {
     if (!validateAddForm()) return
-    store.addLink(addForm.value.title.trim(), addForm.value.url)
-    closeAddForm()
+    isSubmittingAdd.value = true
+    try {
+      await store.addLink(addForm.value.title.trim(), addForm.value.url)
+      closeAddForm()
+    } finally {
+      isSubmittingAdd.value = false
+    }
   }
 
   const editingId = ref<string | null>(null)
+  const isSavingEdit = ref(false)
+  const isSavingDraft = ref(false)
   const editForm = ref({ title: '', url: '' })
   const editErrors = ref({ title: '', url: '' })
 
   function openEdit(id: string) {
     const link = store.sortedLinks.find((l) => l.id === id)
     if (!link) return
+
     editForm.value = {
       title: link.draft?.title ?? link.title,
       url: link.draft?.url ?? link.normalizedUrl,
@@ -68,32 +77,56 @@ export function useLinkManager() {
     return !editErrors.value.title && !editErrors.value.url
   }
 
-  function saveEdit() {
+  async function saveEdit() {
     if (!editingId.value || !validateEditForm()) return
-    store.updateLink(editingId.value, {
-      title: editForm.value.title.trim(),
-      url: editForm.value.url,
-    })
-    store.discardLinkDraft(editingId.value)
-    closeEdit()
+    isSavingEdit.value = true
+    try {
+      await store.updateLink(editingId.value, {
+        title: editForm.value.title.trim(),
+        url: editForm.value.url,
+      })
+
+      await store.discardLinkDraft(editingId.value)
+      closeEdit()
+    } finally {
+      isSavingEdit.value = false
+    }
   }
 
-  function saveEditAsDraft() {
+  async function saveEditAsDraft() {
     if (!editingId.value || !validateEditForm()) return
-    store.saveLinkDraft(editingId.value, editForm.value.title.trim(), editForm.value.url)
-    closeEdit()
+    isSavingDraft.value = true
+    try {
+      await store.saveLinkDraft(editingId.value, editForm.value.title.trim(), editForm.value.url)
+      closeEdit()
+    } finally {
+      isSavingDraft.value = false
+    }
   }
 
-  function publishDraft(id: string) {
-    store.publishLinkDraft(id)
+  const draftActionLinkId = ref<string | null>(null)
+
+  async function publishDraft(id: string) {
+    draftActionLinkId.value = id
+    try {
+      await store.publishLinkDraft(id)
+    } finally {
+      draftActionLinkId.value = null
+    }
   }
 
-  function discardDraft(id: string) {
-    store.discardLinkDraft(id)
+  async function discardDraft(id: string) {
+    draftActionLinkId.value = id
+    try {
+      await store.discardLinkDraft(id)
+    } finally {
+      draftActionLinkId.value = null
+    }
   }
 
   const pendingDeleteId = ref<string | null>(null)
   const pendingDeleteTitle = ref('')
+  const isDeletingLink = ref(false)
   const deletedLink = ref<HoLinkItem | null>(null)
   let undoTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -109,26 +142,33 @@ export function useLinkManager() {
     pendingDeleteTitle.value = ''
   }
 
-  function deleteLink() {
+  async function deleteLink() {
     const id = pendingDeleteId.value
     if (!id) return
     const link = store.sortedLinks.find((l) => l.id === id)
     if (!link) return
-    if (undoTimer) clearTimeout(undoTimer)
-    deletedLink.value = { ...link }
-    store.deleteLink(id)
-    pendingDeleteId.value = null
-    pendingDeleteTitle.value = ''
-    undoTimer = setTimeout(() => {
-      deletedLink.value = null
-    }, 5000)
+
+    isDeletingLink.value = true
+    try {
+      if (undoTimer) clearTimeout(undoTimer)
+      deletedLink.value = { ...link }
+      await store.deleteLink(id)
+      pendingDeleteId.value = null
+      pendingDeleteTitle.value = ''
+      undoTimer = setTimeout(() => {
+        deletedLink.value = null
+      }, 5000)
+    } finally {
+      isDeletingLink.value = false
+    }
   }
 
-  function undoDelete() {
+  async function undoDelete() {
     if (!deletedLink.value) return
     if (undoTimer) clearTimeout(undoTimer)
-    store.addLink(deletedLink.value.title, deletedLink.value.url)
+    const linkData = deletedLink.value
     deletedLink.value = null
+    await store.addLink(linkData.title, linkData.url)
   }
 
   function toggleLink(id: string) {
@@ -167,9 +207,9 @@ export function useLinkManager() {
     utmLinkId.value = null
   }
 
-  function saveUtm(source: string, medium: string, campaign: string) {
+  async function saveUtm(source: string, medium: string, campaign: string) {
     if (!utmLinkId.value) return
-    store.updateLink(utmLinkId.value, {
+    await store.updateLink(utmLinkId.value, {
       utmSource: source.trim() || undefined,
       utmMedium: medium.trim() || undefined,
       utmCampaign: campaign.trim() || undefined,
@@ -178,6 +218,7 @@ export function useLinkManager() {
   }
 
   const isImporting = ref(false)
+  const isImportingUrls = ref(false)
   const importText = ref('')
   const importError = ref('')
 
@@ -191,7 +232,7 @@ export function useLinkManager() {
     isImporting.value = false
   }
 
-  function importUrls() {
+  async function importUrls() {
     const lines = importText.value
       .split('\n')
       .map((l) => l.trim())
@@ -202,17 +243,20 @@ export function useLinkManager() {
       return
     }
 
-    lines.forEach((rawUrl) => {
-      store.addLink(rawUrl, rawUrl)
-    })
-
-    closeImport()
+    isImportingUrls.value = true
+    try {
+      await Promise.all(lines.map((rawUrl) => store.addLink(rawUrl, rawUrl)))
+      closeImport()
+    } finally {
+      isImportingUrls.value = false
+    }
   }
 
   return {
     searchQuery,
     filteredLinks,
     isAdding,
+    isSubmittingAdd,
     addForm,
     addErrors,
     detectedPlatform,
@@ -220,22 +264,26 @@ export function useLinkManager() {
     closeAddForm,
     addLink,
     editingId,
+    isSavingEdit,
+    isSavingDraft,
     editForm,
     editErrors,
     openEdit,
     closeEdit,
     saveEdit,
+    saveEditAsDraft,
+    draftActionLinkId,
+    publishDraft,
+    discardDraft,
     pendingDeleteId,
     pendingDeleteTitle,
+    isDeletingLink,
     confirmDelete,
     cancelDelete,
     deleteLink,
     deletedLink,
     undoDelete,
     toggleLink,
-    saveEditAsDraft,
-    publishDraft,
-    discardDraft,
     moveUp,
     moveDown,
     onReorder,
@@ -245,6 +293,7 @@ export function useLinkManager() {
     closeUtm,
     saveUtm,
     isImporting,
+    isImportingUrls,
     importText,
     importError,
     openImport,

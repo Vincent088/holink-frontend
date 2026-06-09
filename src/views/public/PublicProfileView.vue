@@ -16,18 +16,18 @@
     </template>
 
     <!-- Content -->
-    <template v-else-if="user">
+    <template v-else-if="profile">
       <!-- Profile header -->
       <div class="profile-card">
         <div class="avatar-wrapper">
-          <img v-if="user.avatarUrl" :src="user.avatarUrl" :alt="user.displayName" class="avatar" />
+          <img v-if="profile.avatarUrl" :src="profile.avatarUrl" :alt="profile.displayName" class="avatar" />
           <div v-else class="avatar-fallback">
             {{ initials }}
           </div>
         </div>
         <div class="profile-info">
-          <h1 class="display-name">{{ user.displayName }}</h1>
-          <p v-if="user.bio" class="bio">{{ user.bio }}</p>
+          <h1 class="display-name">{{ profile.displayName }}</h1>
+          <p v-if="profile.bio" class="bio">{{ profile.bio }}</p>
         </div>
       </div>
 
@@ -49,25 +49,24 @@
   import { ref, computed, onMounted } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { ExternalLink } from 'lucide-vue-next'
-  import { useUserStore } from '@/stores/user'
+  import { profileApi } from '@/services/api'
   import { trackEvent } from '@/utils/analytics'
   import { buildUtmUrl } from '@/utils/url'
   import PlatformBadge from '@/components/app/PlatformBadge.vue'
-  import type { HoLinkItem } from '@/types'
+  import type { HoLinkUser, HoLinkItem } from '@/types'
 
   const route = useRoute()
   const router = useRouter()
-  const store = useUserStore()
 
   const isLoading = ref(true)
   const username = route.params.username as string
-  const user = store.getUserByUsername(username)
+  const profile = ref<HoLinkUser | null>(null)
 
-  const activeLinks = computed(() => (user ? [...user.links].filter((l) => l.isActive).sort((a, b) => a.order - b.order) : []))
+  const activeLinks = computed(() => (profile.value ? [...profile.value.links].filter((l) => l.isActive).sort((a, b) => a.order - b.order) : []))
 
   const initials = computed(() => {
-    if (!user) return ''
-    return user.displayName
+    if (!profile.value) return ''
+    return profile.value.displayName
       .split(' ')
       .slice(0, 2)
       .map((w) => w[0])
@@ -91,20 +90,25 @@
     window.open(finalUrl, '_blank', 'noopener,noreferrer')
   }
 
-  onMounted(() => {
-    if (!user) {
+  onMounted(async () => {
+    const result = await profileApi.getByUsername(username)
+
+    if (!result) {
       router.replace({ name: 'NotFound' })
       return
     }
 
+    profile.value = result
+
     trackEvent('public_profile_viewed', {
       username,
       link_count: activeLinks.value.length,
+      device_type: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
     })
 
     setTimeout(() => {
       isLoading.value = false
-    }, 800)
+    }, 450)
   })
 </script>
 

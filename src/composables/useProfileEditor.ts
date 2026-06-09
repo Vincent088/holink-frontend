@@ -103,9 +103,7 @@ export function useProfileEditor() {
       }
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 600))
-
-    store.saveProfile(form.value)
+    await store.saveProfile(form.value)
 
     isSaving.value = false
     saveSuccess.value = true

@@ -38,7 +38,7 @@ export function detectPlatform(url: string): Platform {
     const host = hostname.replace('www.', '').toLowerCase()
 
     if (host.includes('instagram.com')) return 'instagram'
-    if (host.includes('youtube.com') || host.includes('youtu.be')) return 'youtube'
+    if (host.includes('youtube.com')) return 'youtube'
     if (host.includes('tiktok.com')) return 'tiktok'
     if (host.includes('wa.me') || host.includes('whatsapp.com')) return 'whatsapp'
     if (host.includes('tokopedia.com') || host.includes('shopee.co') || host.includes('lazada.com') || host.includes('amazon.com') || host.includes('bukalapak.com')) return 'marketplace'

@@ -1,14 +1,11 @@
 <template>
   <div :class="cardClass">
-    <!-- View Mode -->
     <template v-if="!isEditing">
       <div class="card-body">
-        <!-- Drag handle -->
         <div class="drag-handle" title="Drag to reorder">
           <GripVertical :size="16" />
         </div>
 
-        <!-- Up/Down buttons -->
         <div class="reorder-btns">
           <button class="reorder-btn" :disabled="isFirst" @click="$emit('move-up')">
             <ChevronUp :size="14" />
@@ -18,7 +15,6 @@
           </button>
         </div>
 
-        <!-- Link info -->
         <div class="link-info">
           <div class="link-header">
             <span class="link-title">{{ link.title }}</span>
@@ -27,7 +23,6 @@
           <span class="link-url">{{ link.normalizedUrl }}</span>
         </div>
 
-        <!-- Actions -->
         <div class="card-actions">
           <Switch :model-value="link.isActive" @update:model-value="$emit('toggle')" />
           <button class="action-btn" :class="{ 'action-btn--utm-active': hasUtm }" :title="hasUtm ? 'Edit UTM parameters' : 'Add UTM parameters'" @click="$emit('utm')">
@@ -42,13 +37,16 @@
         </div>
       </div>
 
-      <!-- Draft section -->
       <div v-if="link.draft" class="draft-section">
         <div class="draft-header">
           <span class="draft-label">Unpublished changes</span>
           <div class="draft-actions">
-            <button class="draft-btn draft-btn--discard" @click="$emit('discard-draft')">Discard</button>
-            <button class="draft-btn draft-btn--publish" @click="$emit('publish-draft')">Publish</button>
+            <button class="draft-btn draft-btn--discard" :disabled="isDraftLoading" @click="$emit('discard-draft')">
+              {{ isDraftLoading ? '…' : 'Discard' }}
+            </button>
+            <button class="draft-btn draft-btn--publish" :disabled="isDraftLoading" @click="$emit('publish-draft')">
+              {{ isDraftLoading ? '…' : 'Publish' }}
+            </button>
           </div>
         </div>
         <div class="draft-info">
@@ -64,7 +62,6 @@
       </div>
     </template>
 
-    <!-- Edit Mode -->
     <template v-else>
       <div class="edit-body">
         <div class="edit-fields">
@@ -73,7 +70,7 @@
             label="Title"
             placeholder="My Instagram"
             :error="editErrors.title"
-            :maxlength="60"
+            :maxlength="80"
             @update:model-value="$emit('update:edit-form', { ...editForm, title: $event })"
           />
           <AppInput
@@ -85,9 +82,9 @@
           />
         </div>
         <div class="edit-actions">
-          <AppButton size="sm" @click="$emit('save-edit')">Save</AppButton>
-          <AppButton variant="outline" size="sm" @click="$emit('save-draft')">Save as Draft</AppButton>
-          <AppButton variant="ghost" size="sm" @click="$emit('cancel-edit')">Cancel</AppButton>
+          <AppButton size="sm" :loading="isSavingEdit" @click="$emit('save-edit')">Save</AppButton>
+          <AppButton variant="outline" size="sm" :loading="isSavingDraft" @click="$emit('save-draft')">Save as Draft</AppButton>
+          <AppButton variant="ghost" size="sm" :disabled="isSavingEdit || isSavingDraft" @click="$emit('cancel-edit')">Cancel</AppButton>
         </div>
       </div>
     </template>
@@ -110,6 +107,9 @@
     editErrors: { title: string; url: string }
     isFirst: boolean
     isLast: boolean
+    isSavingEdit?: boolean
+    isSavingDraft?: boolean
+    isDraftLoading?: boolean
   }>()
 
   defineEmits<{
