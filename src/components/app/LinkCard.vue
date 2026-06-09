@@ -30,6 +30,14 @@
         <!-- Actions -->
         <div class="card-actions">
           <Switch :model-value="link.isActive" @update:model-value="$emit('toggle')" />
+          <button
+            class="action-btn"
+            :class="{ 'action-btn--utm-active': hasUtm }"
+            :title="hasUtm ? 'Edit UTM parameters' : 'Add UTM parameters'"
+            @click="$emit('utm')"
+          >
+            <Tags :size="15" />
+          </button>
           <button class="action-btn" @click="$emit('edit')">
             <Pencil :size="15" />
           </button>
@@ -71,7 +79,7 @@
 
 <script setup lang="ts">
   import { computed } from 'vue'
-  import { ChevronUp, ChevronDown, Pencil, Trash2, GripVertical } from 'lucide-vue-next'
+  import { ChevronUp, ChevronDown, Pencil, Trash2, GripVertical, Tags } from 'lucide-vue-next'
   import { Switch } from '@/components/ui/switch'
   import PlatformBadge from '@/components/app/PlatformBadge.vue'
   import AppInput from '@/components/app/AppInput.vue'
@@ -95,8 +103,13 @@
     toggle: []
     'move-up': []
     'move-down': []
+    utm: []
     'update:edit-form': [value: { title: string; url: string }]
   }>()
+
+  const hasUtm = computed(
+    () => !!(props.link.utmSource || props.link.utmMedium || props.link.utmCampaign),
+  )
 
   const cardClass = computed(() => ({
     'link-card': true,
@@ -147,6 +160,9 @@
   }
   .action-btn--danger {
     @apply hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20;
+  }
+  .action-btn--utm-active {
+    @apply text-violet-500 dark:text-violet-400;
   }
   .edit-body {
     @apply p-4 flex flex-col gap-4;

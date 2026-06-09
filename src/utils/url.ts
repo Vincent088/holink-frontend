@@ -49,6 +49,32 @@ export function detectPlatform(url: string): Platform {
   }
 }
 
+export interface UtmParams {
+  utmSource?: string
+  utmMedium?: string
+  utmCampaign?: string
+}
+
+export function buildUtmUrl(baseUrl: string, params: UtmParams): string {
+  if (!baseUrl) return baseUrl
+  const entries: [string, string][] = []
+  if (params.utmSource?.trim()) entries.push(['utm_source', params.utmSource.trim()])
+  if (params.utmMedium?.trim()) entries.push(['utm_medium', params.utmMedium.trim()])
+  if (params.utmCampaign?.trim()) entries.push(['utm_campaign', params.utmCampaign.trim()])
+  if (!entries.length) return baseUrl
+  try {
+    const url = new URL(baseUrl)
+    entries.forEach(([k, v]) => url.searchParams.set(k, v))
+    return url.toString()
+  } catch {
+    return baseUrl
+  }
+}
+
+export function hasUtmParams(params: UtmParams): boolean {
+  return !!(params.utmSource?.trim() || params.utmMedium?.trim() || params.utmCampaign?.trim())
+}
+
 export function getDomain(url: string): string {
   try {
     return new URL(url).hostname.replace('www.', '')

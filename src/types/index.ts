@@ -10,6 +10,9 @@ export interface HoLinkItem {
   order: number
   createdAt: string
   updatedAt: string
+  utmSource?: string
+  utmMedium?: string
+  utmCampaign?: string
 }
 
 export interface HoLinkUser {

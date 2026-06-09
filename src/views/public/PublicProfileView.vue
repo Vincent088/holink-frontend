@@ -51,6 +51,7 @@
   import { ExternalLink } from 'lucide-vue-next'
   import { useUserStore } from '@/stores/user'
   import { trackEvent } from '@/utils/analytics'
+  import { buildUtmUrl } from '@/utils/url'
   import PlatformBadge from '@/components/app/PlatformBadge.vue'
   import type { HoLinkItem } from '@/types'
 
@@ -82,7 +83,12 @@
       url: link.normalizedUrl,
       profile_username: username,
     })
-    window.open(link.normalizedUrl, '_blank', 'noopener,noreferrer')
+    const finalUrl = buildUtmUrl(link.normalizedUrl, {
+      utmSource: link.utmSource,
+      utmMedium: link.utmMedium,
+      utmCampaign: link.utmCampaign,
+    })
+    window.open(finalUrl, '_blank', 'noopener,noreferrer')
   }
 
   onMounted(() => {
@@ -106,8 +112,6 @@
   .page {
     @apply min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center px-4 py-12;
   }
-
-  /* Profile header */
   .profile-card {
     @apply flex flex-col items-center gap-4 mb-8 text-center w-full max-w-sm;
   }
@@ -131,8 +135,6 @@
   .bio {
     @apply text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-xs;
   }
-
-  /* Links */
   .link-list {
     @apply flex flex-col gap-3 w-full max-w-sm;
   }
@@ -156,8 +158,6 @@
   .no-links {
     @apply text-sm text-gray-400 dark:text-gray-600;
   }
-
-  /* Skeleton */
   .skeleton {
     @apply bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse;
   }

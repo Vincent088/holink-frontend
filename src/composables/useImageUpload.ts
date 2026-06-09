@@ -30,20 +30,6 @@ export function useImageUpload() {
     isUploading.value = true
 
     try {
-      /*
-      For API Implementation
-      ------------------------------------------------------------------------
-        const formData = new FormData()
-        formData.append('file', file)
-                const response = await fetch('https://your-api.com/upload', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        })
-                const data = await response.json()
-        return data.url
-    ------------------------------------------------------------------------
-       */
       const base64 = await fileToBase64(file)
       return base64
     } catch {
