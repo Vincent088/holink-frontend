@@ -180,7 +180,6 @@ The app is already structured for a real backend. To connect:
 - **Server-Side Rendering (Nuxt)** — for proper OG tag support, SEO, and initial page load performance on the public profile page.
 - **Real authentication** — login, registration, OAuth (Google/GitHub), and JWT session management.
 - **Link analytics dashboard** — visualize click events per link over time using the already-stored event data.
-- **Custom domain support** — allow creators to map a custom domain to their public profile page.
 - **More platform detectors** — expand detection to cover LinkedIn, Twitter/X, Threads, Twitch, Spotify, and other common creator platforms.
 - **CI/CD pipeline** — run unit and E2E tests automatically on every pull request using GitHub Actions.
 - **UI polish** — refine spacing, typography, and micro-interactions across the dashboard and public profile page; add transition animations for card entries, smoother drag-and-drop feedback, and a more polished empty state design to better match a production creator tool.
