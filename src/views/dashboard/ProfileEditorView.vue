@@ -33,10 +33,20 @@
           <span class="or-divider">or</span>
 
           <input ref="fileInputRef" type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" @change="onFileChange" />
+
+          <AppButton v-if="isUploadedImage" variant="ghost" size="sm" @click="clearAvatar">
+            <X :size="14" />
+            Remove
+          </AppButton>
         </div>
 
         <!-- URL Input -->
-        <AppInput v-model="form.avatarUrl" placeholder="https://example.com/photo.jpg" :hint="errors.avatarUrl ? undefined : 'Paste an image URL'" :error="errors.avatarUrl" />
+        <AppInput
+          v-model="avatarUrlInput"
+          :placeholder="isUploadedImage ? 'Custom image uploaded' : 'https://example.com/photo.jpg'"
+          :hint="errors.avatarUrl ? undefined : isUploadedImage ? 'Using uploaded image. Type a URL to replace it.' : 'Paste an image URL'"
+          :error="errors.avatarUrl"
+        />
 
         <!-- Upload Error -->
         <p v-if="uploadError" class="upload-error">{{ uploadError }}</p>
@@ -68,14 +78,14 @@
 
 <script setup lang="ts">
   import { ref } from 'vue'
-  import { User, CheckCircle, Upload, Camera } from 'lucide-vue-next'
+  import { User, CheckCircle, Upload, Camera, X } from 'lucide-vue-next'
   import AppInput from '@/components/app/AppInput.vue'
   import AppTextarea from '@/components/app/AppTextarea.vue'
   import AppButton from '@/components/app/AppButton.vue'
   import { useProfileEditor } from '@/composables/useProfileEditor'
   import { useImageUpload } from '@/composables/useImageUpload'
 
-  const { form, errors, isSaving, saveSuccess, save, avatarLoadError } = useProfileEditor()
+  const { form, errors, isSaving, saveSuccess, save, avatarLoadError, avatarUrlInput, isUploadedImage, clearAvatar, setUploadedAvatar } = useProfileEditor()
   const { isUploading, uploadError, uploadImage } = useImageUpload()
 
   const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -90,7 +100,7 @@
 
     const url = await uploadImage(file)
     if (url) {
-      form.value.avatarUrl = url
+      setUploadedAvatar(url)
     }
 
     if (fileInputRef.value) fileInputRef.value.value = ''

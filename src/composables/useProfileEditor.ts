@@ -1,4 +1,4 @@
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { validateUsername, validateDisplayName, validateBio } from '@/utils/validation'
 import { isValidUrl } from '@/utils/url'
@@ -24,6 +24,8 @@ export function useProfileEditor() {
   const saveSuccess = ref(false)
   const avatarLoadError = ref(false)
 
+  const uploadedImageData = ref(isDataUrl(form.value.avatarUrl) ? form.value.avatarUrl : '')
+
   watch(
     () => store.currentUser,
     (user) => {
@@ -34,6 +36,7 @@ export function useProfileEditor() {
           bio: user.bio,
           avatarUrl: user.avatarUrl ?? '',
         }
+        uploadedImageData.value = isDataUrl(user.avatarUrl ?? '') ? (user.avatarUrl ?? '') : ''
       }
     }
   )
@@ -48,6 +51,29 @@ export function useProfileEditor() {
 
   function isDataUrl(url: string): boolean {
     return url.startsWith('data:image/')
+  }
+
+  const isUploadedImage = computed(() => isDataUrl(form.value.avatarUrl))
+
+  const avatarUrlInput = computed({
+    get: () => (isUploadedImage.value ? '' : form.value.avatarUrl),
+    set: (value: string) => {
+      if (value === '' && uploadedImageData.value) {
+        form.value.avatarUrl = uploadedImageData.value
+      } else {
+        form.value.avatarUrl = value
+      }
+    },
+  })
+
+  function setUploadedAvatar(base64: string) {
+    form.value.avatarUrl = base64
+    uploadedImageData.value = base64
+  }
+
+  function clearAvatar() {
+    form.value.avatarUrl = ''
+    uploadedImageData.value = ''
   }
 
   function validate(): boolean {
@@ -120,5 +146,9 @@ export function useProfileEditor() {
     saveSuccess,
     save,
     avatarLoadError,
+    avatarUrlInput,
+    isUploadedImage,
+    clearAvatar,
+    setUploadedAvatar,
   }
 }
